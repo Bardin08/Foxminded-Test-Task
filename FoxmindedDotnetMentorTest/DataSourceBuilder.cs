@@ -5,6 +5,7 @@ namespace FoxmindedDotnetMentorTest;
 public class DataSourceBuilder : IDataSourceBuilder
 {
     private readonly List<string> _paths = new();
+    public int PathsCount => _paths.Count;
 
     public IDataSourceBuilder UseFilePath(string path)
     {

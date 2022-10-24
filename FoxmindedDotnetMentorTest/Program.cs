@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using FoxmindedDotnetMentorTest.Abstractions;
 using FoxmindedDotnetMentorTest.Models;
 using FoxmindedDotnetMentorTest.Processors;
 
@@ -6,19 +7,53 @@ namespace FoxmindedDotnetMentorTest;
 
 internal static class Program
 {
+    private static readonly IFileProcessor FileProcessor = new FileProcessor();
+    public static readonly ILineProcessor _lineProcessor = new LineProcessor();
+
     static async Task Main(string[]? args)
     {
-        var sourceBuilder = new DataSourceBuilder()
-            .TryUseFilePathFromInputArgs(args)
-            .UseFilePath(@"C:\Users\vbard\OneDrive\Рабочий стол\Test2.txt");
+        await Start(args);
+    }
 
-        var fileProcessor = new FileProcessor();
-        var lineProcessor = new LineProcessor();
+    private static async Task Start(string[]? args)
+    {
+        while (true)
+        {
+            var paths = TryGetPaths(args);
 
-        var result = await new DataProcessor(fileProcessor, lineProcessor)
-            .ProcessAsync(sourceBuilder.Build());
+            var processingResult = await new DataProcessor(FileProcessor, _lineProcessor).ProcessAsync(paths);
 
-        PrintProcessingResult(result);
+            Console.Clear();
+
+            PrintProcessingResult(processingResult);
+        }
+    }
+
+    private static IEnumerable<string> TryGetPaths(string[]? args)
+    {
+        var dataSource = new DataSourceBuilder()
+            .TryUseFilePathFromInputArgs(args);
+
+        if (dataSource.PathsCount > 0)
+        {
+            return dataSource.Build();
+        }
+
+        while (true)
+        {
+            Console.WriteLine("Please enter a path to the file: ");
+            var path = Console.ReadLine();
+
+            if (File.Exists(path))
+            {
+                dataSource.UseFilePath(path);
+                return dataSource.Build();
+            }
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Invalid path!");
+            Console.ResetColor();
+        }
     }
 
     private static void PrintProcessingResult(DataProcessingResult processingResult)
